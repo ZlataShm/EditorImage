@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 repositories {
@@ -8,16 +9,40 @@ repositories {
 
 dependencies {
     implementation 'org.openpnp:opencv:4.9.0-0'
+    // Другие зависимости вашего проекта, если есть
 }
 
+// Настройка для создания fat JAR
 jar {
     manifest {
-        attributes(
-                'Main-Class': 'editor.Main'
-        )
+        attributes 'Main-Class': 'editor.Main' // Замените editor.Main на полное имя класса вашего основного класса
     }
 
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
+
+// Задача для сборки fat JAR
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'editor.Main' // Замените editor.Main на полное имя класса вашего основного класса
+    }
+
+    // Включение всех зависимостей в fat JAR
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    // Включение нативных библиотек OpenCV в fat JAR
+    from {
+        configurations.runtimeClasspath.findAll { it.name.startsWith('opencv-') }.collect {
+            zipTree(it)
+        }
+    }
+
+    // Имя выходного файла fat JAR
+    archiveFileName = 'ImageEditor-fat.jar'
+    destinationDir = file("$buildDir/libs")
+}
+
